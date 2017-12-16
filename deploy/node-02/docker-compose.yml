@@ -1,0 +1,69 @@
+version: "2"
+services:
+  cygnus:
+    image: fiware/cygnus-ngsi:1.7.1
+    hostname: cygnus
+    container_name: cygnus
+    volumes:
+      - ./config/cygnus/agent.conf:/opt/apache-flume/conf/agent.conf
+    links:
+      - mysql-cygnus:mysql-cygnus
+      - mongodb-cygnus:mongodb-cygnus
+    expose:
+      - "5050"
+    ports:
+      - "5050:5050"
+    environment:
+      - CYGNUS_MYSQL_HOST=mysql-cygnus
+      - CYGNUS_MYSQL_PORT=3306
+      - CYGNUS_MYSQL_USER=root
+      - CYGNUS_MYSQL_PASS=YOUR_MYSQL_ROOT_PASSWORD
+      - CYGNUS_MONGO_HOSTS=mongodb-cygnus:27017
+      - CYGNUS_MONGO_USER=YOUR_MONGODB_USER
+      - CYGNUS_MONGO_PASS=YOUR_MONGODB_PASSWORD
+      - CYGNUS_LOG_LEVEL=INFO
+
+  mysql-cygnus:
+    image: mysql:5.7
+    hostname: mysql-cygnus
+    container_name: mysql-cygnus
+    expose:
+      - "3306"
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=YOUR_MYSQL_ROOT_PASSWORD
+    volumes:
+      - mysql-cygnus-volume:/var/lib/mysql
+
+  mongodb-cygnus:
+    image: mongo:3.4.7
+    hostname: mongodb-cygnus
+    container_name: mongodb-cygnus
+    expose:
+      - "27017"
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-cygnus-volume:/data
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=YOUR_MONGODB_USER
+      - MONGO_INITDB_ROOT_PASSWORD=YOUR_MONGODB_PASSWORD
+    command: mongod --smallfiles
+
+  sth-comet:
+    image: telefonicaiot/fiware-sth-comet:2.2.0
+    hostname: sth-comet
+    container_name: sth-comet
+    volumes:
+      - ./config/sth/config.js:/opt/sth/config.js
+    links:
+      - mongodb-cygnus
+    expose:
+      - "8666"
+    ports:
+      - "8666:8666"
+
+volumes:
+  mysql-cygnus-volume:
+  mongodb-cygnus-volume:
